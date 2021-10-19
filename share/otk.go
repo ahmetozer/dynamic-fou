@@ -14,3 +14,7 @@ func NewOTK(password string) string {
 
 	return fmt.Sprintf("%x", md5.Sum(data))
 }
+
+func OTKCheck(otk, password string) bool {
+	return otk == NewOTK(password)
+}
