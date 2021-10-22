@@ -96,13 +96,16 @@ func MessageTypeController(conn *net.UDPConn, message []byte, rlen int, remote *
 		return
 	}
 	otkStatus := share.OTKCheck(share.IniVal(data, "otk"), cli.ClientKey)
-	share.Logger.Debug("otkStatus", zap.String("otk", share.IniVal(data, "otk")), zap.String("remote", remote.String()), zap.Bool("isOTKValid", otkStatus))
+	mode := share.IniVal(data, "mode")
+	share.Logger.Debug("newMesagge", zap.String("mode", mode), zap.String("otk", share.IniVal(data, "otk")), zap.String("remote", remote.String()), zap.Bool("isOTKValid", otkStatus))
 	if !otkStatus {
 		return
 	}
-	switch mode := share.IniVal(data, "mode"); mode {
+	switch mode {
 	case "whoami":
 		Whoami(conn, remote)
+	case "connect":
+		Connect(conn, remote)
 	default:
 		share.Logger.Debug("unknow mode type", zap.String("remote", remote.String()), zap.String("mode", mode))
 	}
@@ -111,6 +114,21 @@ func MessageTypeController(conn *net.UDPConn, message []byte, rlen int, remote *
 func Whoami(conn *net.UDPConn, remote *net.UDPAddr) {
 	_, err := conn.WriteTo([]byte(fmt.Sprintf("IP=%v\nPORT=%v\n", remote.IP, remote.Port)), remote)
 	if err != nil {
-		share.Logger.Error("Whoami", zap.String("remote", remote.String()), zap.Error(err))
+		share.Logger.Error("whoami", zap.String("remote", remote.String()), zap.Error(err))
 	}
+}
+
+func Connect(conn *net.UDPConn, remote *net.UDPAddr) {
+	err := share.UDPPortCheck(remote.Port)
+	status := "ok"
+	if err != nil {
+		status = "err"
+		share.Logger.Debug("connect", zap.String("remote", remote.String()), zap.Error(err))
+		_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\nerr=%v\n", status, err)), remote)
+		if err != nil {
+			share.Logger.Error("connect", zap.String("remote", remote.String()), zap.Error(err))
+		}
+		status = "err"
+	}
+
 }
