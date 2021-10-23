@@ -23,7 +23,7 @@ func Start() {
 	if configFile == "" {
 		configFile = "/etc/dynamic-fou.client.json"
 	}
-	share.Logger.Debug("Opening config file", zap.String("config-file", configFile))
+	share.Logger.Debug("opening config file", zap.String("config-file", configFile))
 	err := share.CheckFolder(filepath.Dir(configFile))
 	if err != nil {
 		share.Logger.Fatal("log path is not oppened", zap.String("path", filepath.Dir(configFile)), zap.String("err", err.Error()))
@@ -34,7 +34,7 @@ func Start() {
 		share.Logger.Fatal("config file cannot parsed", zap.String("file", configFile), zap.String("err", err.Error()))
 	}
 
-	share.Logger.Debug("Config file parsed", zap.String("clientName", clients.ClientName), zap.String("server-count", fmt.Sprint((len(clients.Servers)))))
+	share.Logger.Debug("config file parsed", zap.String("clientName", clients.ClientName), zap.String("server-count", fmt.Sprint((len(clients.Servers)))))
 	ClientName = clients.ClientName
 	var wg sync.WaitGroup
 	for i := 0; i < len(clients.Servers); i++ {
