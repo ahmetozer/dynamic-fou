@@ -7,6 +7,7 @@ import (
 	"github.com/ahmetozer/dynamic-fou/client"
 	"github.com/ahmetozer/dynamic-fou/server"
 	"github.com/ahmetozer/dynamic-fou/share"
+	"go.uber.org/zap"
 )
 
 const (
@@ -45,6 +46,11 @@ func main() {
 	// Start the logger
 	share.InitLogger(LOGFILE, uint8(u))
 	defer share.LogDefer()
+
+	err = share.CheckKernelFouCapability()
+	if err != nil && os.Getenv("KERNEL_FOU_TEST") != "no" {
+		share.Logger.Fatal("sys-fou-test", zap.Error(err))
+	}
 
 	if MODE == "server" {
 		var a = server.Config{
