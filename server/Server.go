@@ -129,6 +129,11 @@ func Connect(conn *net.UDPConn, remote *net.UDPAddr) {
 			share.Logger.Error("connect", zap.String("remote", remote.String()), zap.Error(err))
 		}
 		status = "err"
+		return
+	}
+	_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\n", status)), remote)
+	if err != nil {
+		share.Logger.Error("connect", zap.String("remote", remote.String()), zap.Error(err))
 	}
 
 }
