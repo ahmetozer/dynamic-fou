@@ -18,6 +18,7 @@ var (
 	configList          []ClientConfig
 	CurrentClientList   map[string]CurrentClient
 	CurrentClientIdList map[string]int
+	fouPortInt          int
 )
 
 type Config struct {
@@ -72,6 +73,15 @@ func Start() {
 
 	if fouPort == "" {
 		fouPort = "5555"
+	}
+
+	fouPortInt, err = strconv.Atoi(fouPort)
+	if err != nil {
+		share.Logger.Fatal("FOU_PORT must be a number", zap.String("port", fouPort), zap.String("err", err.Error()))
+	}
+	err = share.FouAdd(fouPortInt)
+	if err != nil {
+		share.Logger.Fatal("fouAdd", zap.String("port", fouPort), zap.String("err", err.Error()))
 	}
 
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
@@ -146,6 +156,8 @@ func Shutdown() int {
 		}
 
 	}
+	err = share.FouDel(fouPortInt)
+
 	if err != nil {
 		return 1
 	}

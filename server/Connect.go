@@ -23,7 +23,6 @@ func Connect(conn *net.UDPConn, remote *net.UDPAddr, client ClientConfig) {
 	}
 
 	if CurrentClientList[client.ClientName].IP != "" {
-		fmt.Printf("\n\nremove client %v:%v\n\n", CurrentClientList[client.ClientName].IP, CurrentClientList[client.ClientName].PORT)
 		share.Logger.Debug("connect.InterfaceDel", zap.String("clientName", client.ClientName), zap.Error(share.InterfaceDel(CurrentClientIdList[client.ClientName])))
 	}
 
@@ -31,10 +30,9 @@ func Connect(conn *net.UDPConn, remote *net.UDPAddr, client ClientConfig) {
 		IP:   remote.IP.String(),
 		PORT: remote.Port,
 	}
-	fmt.Printf("\n\n%v\n\n", CurrentClientList[client.ClientName].toString())
 
-	//err = share.InterfaceAdd(CurrentClientIdList[client.ClientName], 999, remote.IP.String(), remote.Port, client.MTU)
-	err = share.InterfaceAdd(0, 999, remote.IP.String(), 800, 1500)
+	err = share.InterfaceAdd(CurrentClientIdList[client.ClientName], -1, remote.IP.String(), remote.Port, client.MTU)
+
 	if err != nil {
 		share.Logger.Error("connect.InterfaceAdd", zap.String("clientName", client.ClientName), zap.Error(err))
 		status = err.Error()

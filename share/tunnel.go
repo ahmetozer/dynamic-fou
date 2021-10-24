@@ -55,7 +55,7 @@ func InterfaceAdd(id int, sourcePort int, remote string, destinationPort int, MT
 		}
 	}
 
-	Logger.Info("new tunnel", zap.String("tun", toString(newtun)))
+	Logger.Debug("new tunnel", zap.String("tun", toString(newtun)))
 	return netlink.LinkAdd(&newtun)
 }
 
