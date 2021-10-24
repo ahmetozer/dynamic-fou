@@ -14,6 +14,7 @@ import (
 
 var (
 	configList []ClientConfig
+	ClientList map[string]CurrentClient
 )
 
 type Config struct {
@@ -21,16 +22,16 @@ type Config struct {
 	IP   string
 }
 
-func (EstablishServerS *Config) Defaults() {
-	if EstablishServerS.IP == "" {
-		EstablishServerS.IP = "::"
+func Start() {
+	PORT := os.Getenv("PORT")
+	IP := os.Getenv("IP")
+	if IP == "" {
+		IP = "::"
 	}
-	if EstablishServerS.PORT == "" {
-		EstablishServerS.PORT = "9000"
-	}
-}
 
-func Start(es *Config) {
+	if PORT == "" {
+		PORT = "9000"
+	}
 
 	configFile := os.Getenv("CONFIG_FILE")
 
@@ -54,17 +55,22 @@ func Start(es *Config) {
 		share.Logger.Debug(fmt.Sprintf("client %v", i+1), configList[i].toZap()...)
 	}
 
-	es.Defaults()
-	share.Logger.Debug("server info", zap.String("port", es.PORT), zap.String("ip", es.IP))
+	share.Logger.Debug("server info", zap.String("port", PORT), zap.String("ip", IP))
 
-	i, err := strconv.Atoi(es.PORT)
+	i, err := strconv.Atoi(PORT)
 	if err != nil {
-		share.Logger.Fatal("PORT must be a number", zap.String("port", es.PORT), zap.String("err", err.Error()))
+		share.Logger.Fatal("PORT must be a number", zap.String("port", PORT), zap.String("err", err.Error()))
+	}
+
+	fouPort := os.Getenv("FOU_PORT")
+
+	if fouPort == "" {
+		fouPort = "5555"
 	}
 
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
 		Port: i,
-		IP:   net.ParseIP(es.IP),
+		IP:   net.ParseIP(IP),
 	})
 	if err != nil {
 		share.Logger.Fatal(err.Error())

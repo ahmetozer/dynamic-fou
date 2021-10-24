@@ -53,12 +53,8 @@ func main() {
 	}
 
 	if MODE == "server" {
-		var a = server.Config{
-			PORT: PORT,
-			IP:   IP,
-		}
 		share.Logger.Info("Starting server")
-		server.Start(&a)
+		server.Start()
 	} else if MODE == "client" {
 		share.Logger.Info("Starting client")
 		client.Start()
