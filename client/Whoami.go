@@ -3,13 +3,20 @@ package client
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/ahmetozer/dynamic-fou/share"
 )
 
+type Whoami struct {
+	IP              string
+	PORT            string
+	REMOTE_FOU_PORT int
+}
+
 // Ask server current IP and Port
-func (a SvConfig) Whoami(conn *net.Conn) (string, string, error) {
+func (a SvConfig) Whoami(conn *net.Conn) (Whoami, error) {
 
 	fmt.Fprintf(*conn, "mode=whoami\nclient=%v\notk=%v", ClientName, share.NewOTK(a.ClientKey))
 
@@ -31,16 +38,29 @@ func (a SvConfig) Whoami(conn *net.Conn) (string, string, error) {
 		break
 	}
 
-	var IP, PORT string
+	var IP, PORT, FOU_PORT string
 
 	if err == nil {
 		IP = share.IniVal(string(p), "IP")
 		PORT = share.IniVal(string(p), "PORT")
 		if IP == "" || PORT == "" {
-			return "", "", fmt.Errorf("server respond is corrupted ip:'%v' port:'%v'", IP, PORT)
+			return Whoami{}, fmt.Errorf("server respond is corrupted ip:'%v' port:'%v'", IP, PORT)
 		}
 	} else {
-		return "", "", err
+		return Whoami{}, err
 	}
-	return IP, PORT, nil
+
+	FOU_PORT = share.IniVal(string(p), "FOU_PORT")
+	if FOU_PORT == "" {
+		return Whoami{}, fmt.Errorf("fou port respond is empty ip:'%v' port:'%v'", IP, PORT)
+	}
+	FOU_PORT_INT, err := strconv.Atoi(FOU_PORT)
+	if err != nil {
+		return Whoami{}, fmt.Errorf("fou port respond is empty ip:'%v' port:'%v' %v", IP, PORT, err)
+	}
+	return Whoami{
+		IP:              IP,
+		PORT:            PORT,
+		REMOTE_FOU_PORT: FOU_PORT_INT,
+	}, nil
 }
