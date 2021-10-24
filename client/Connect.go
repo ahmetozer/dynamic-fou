@@ -14,7 +14,7 @@ var (
 	fouPortInt map[int]int
 )
 
-func (a SvConfig) Connect(conn *net.Conn, clientId int) error {
+func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 
 	fmt.Fprintf(*conn, "mode=connect\nclient=%v\notk=%v", ClientName, share.NewOTK(a.ClientKey))
 
@@ -67,17 +67,40 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int) error {
 		}
 	}
 
+	connOldLocal := (*conn).LocalAddr().String()
+
 	err = (*conn).Close()
 	if err != nil {
 		return fmt.Errorf("connClose: %v", err)
 	}
+
+	laddr, err := net.ResolveUDPAddr("udp", connOldLocal)
+	if err != nil {
+		return fmt.Errorf("laddr: %v %v", err, connOldLocal)
+	}
+	raddr := net.UDPAddr{IP: net.ParseIP(a.RemoteAddr), Port: whoami.REMOTE_FOU_PORT}
+	tempConn, err := net.DialUDP("udp", laddr, &raddr)
+	if err != nil {
+		return fmt.Errorf("tempConn: %v %v", err, tempPort)
+	}
+
+	for ty := 0; ty < 5; ty++ {
+		fmt.Fprintf(tempConn, "mode=connect\nclient=%v\notk=%v", ClientName, share.NewOTK(a.ClientKey))
+		time.Sleep(time.Millisecond * 500)
+	}
+
+	err = tempConn.Close()
+	if err != nil {
+		return fmt.Errorf("tempConnClose: %v", err)
+	}
+
 	err = share.FouAdd(tempPort)
 	if err != nil {
 		return fmt.Errorf("fouAdd: %v %v", err, tempPort)
 	}
 	fouPortInt[clientId] = tempPort
 
-	err = share.InterfaceAdd(clientId, -1, a.RemoteAddr, int(a.RemotePort), a.MTU)
+	err = share.InterfaceAdd(clientId, -1, a.RemoteAddr, int(whoami.REMOTE_FOU_PORT), a.MTU)
 
 	if err != nil {
 		return fmt.Errorf("interfaceAdd: %v", err)

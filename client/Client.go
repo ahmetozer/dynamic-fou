@@ -60,7 +60,7 @@ func Start() {
 
 func (a SvConfig) clientInit(clientId int) {
 	k := true
-	var IP, PORT string
+	var whoami Whoami
 INITLOOP:
 	for k {
 		remote := fmt.Sprintf("%v:%v", a.RemoteAddr, a.RemotePort)
@@ -73,21 +73,35 @@ INITLOOP:
 
 		time.Sleep(1 * time.Second)
 		share.Logger.Debug("whoami", zap.String("stat", "function started"), zap.String("IP", a.RemoteAddr), zap.Uint16("PORT", a.RemotePort))
-		IP, PORT, err = a.Whoami(&conn)
-		if err != nil {
-			share.Logger.Error("whoami", zap.String("remote", remote), zap.Error(err))
-			continue INITLOOP
+		for z := 0; z < 3; z++ {
+			if z == 0 {
+				whoami, err = a.Whoami(&conn)
+			} else if z == 3 {
+				whoamiOld := whoami
+				whoami, err = a.Whoami(&conn)
+				if whoamiOld.IP != whoami.IP || whoamiOld.PORT != whoami.PORT {
+					share.Logger.Error("whoami", zap.String("remote", remote), zap.String("error", "IP or Port is not stabile"))
+				}
+			} else {
+				_, err = a.Whoami(&conn)
+			}
+
+			if err != nil {
+				share.Logger.Error("whoami", zap.String("remote", remote), zap.Error(err))
+				continue INITLOOP
+			}
 		}
-		share.Logger.Info("whoami", zap.String("IP", IP), zap.String("PORT", PORT))
+
+		share.Logger.Info("whoami", zap.String("IP", whoami.IP), zap.String("PORT", whoami.PORT))
 		share.Logger.Debug("connect", zap.String("stat", "function started"), zap.String("IP", a.RemoteAddr), zap.Uint16("PORT", a.RemotePort))
-		err = a.Connect(&conn, clientId)
+		err = a.Connect(&conn, clientId, whoami)
 		if err != nil {
 			share.Logger.Error("connect", zap.String("remote", remote), zap.Error(err))
 			continue INITLOOP
 		}
 		share.Logger.Info("done")
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Second)
 	}
 
 }
