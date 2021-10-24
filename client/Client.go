@@ -17,6 +17,7 @@ var (
 )
 
 func Start() {
+	fouPortInt = make(map[int]int)
 
 	configFile := os.Getenv("CONFIG_FILE")
 
@@ -40,7 +41,7 @@ func Start() {
 	for i := 0; i < len(clients.Servers); i++ {
 		wg.Add(1)
 		share.Logger.Debug(fmt.Sprintf("client %v", i+1), clients.Servers[i].toZap()...)
-		go clients.Servers[i].clientInit()
+		go clients.Servers[i].clientInit(i + 1)
 	}
 
 	share.Logger.Debug("client inits are done.")
@@ -48,7 +49,7 @@ func Start() {
 	wg.Wait()
 }
 
-func (a SvConfig) clientInit() {
+func (a SvConfig) clientInit(clientId int) {
 	k := true
 	var IP, PORT string
 INITLOOP:
@@ -70,7 +71,7 @@ INITLOOP:
 		}
 		share.Logger.Info("whoami", zap.String("IP", IP), zap.String("PORT", PORT))
 		share.Logger.Debug("connect", zap.String("stat", "function started"), zap.String("IP", a.RemoteAddr), zap.Uint16("PORT", a.RemotePort))
-		err = a.Connect(&conn)
+		err = a.Connect(&conn, clientId)
 		if err != nil {
 			share.Logger.Error("connect", zap.String("remote", remote), zap.Error(err))
 			continue INITLOOP

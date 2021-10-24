@@ -21,6 +21,7 @@ type SvConfig struct {
 	RemoteAddr      string
 	ServerKey       string
 	ClientKey       string
+	MTU             int
 }
 
 func Parse(configPath string) (ClientConfig, error) {
