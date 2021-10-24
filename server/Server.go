@@ -141,7 +141,7 @@ func MessageTypeController(conn *net.UDPConn, message []byte, rlen int, remote *
 }
 
 func Whoami(conn *net.UDPConn, remote *net.UDPAddr) {
-	_, err := conn.WriteTo([]byte(fmt.Sprintf("IP=%v\nPORT=%v\n", remote.IP, remote.Port)), remote)
+	_, err := conn.WriteTo([]byte(fmt.Sprintf("IP=%v\nPORT=%v\nFOU_PORT=%v\n", remote.IP, remote.Port, fouPortInt)), remote)
 	if err != nil {
 		share.Logger.Error("whoami", zap.String("remote", remote.String()), zap.Error(err))
 	}
