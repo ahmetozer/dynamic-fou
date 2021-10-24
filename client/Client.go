@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/ahmetozer/dynamic-fou/share"
@@ -45,6 +47,13 @@ func Start() {
 	}
 
 	share.Logger.Debug("client inits are done.")
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		share.Logger.Debug("shutdown: Deleting Fou endpoints and tunnels")
+		os.Exit(Shutdown(clients))
+	}()
 
 	wg.Wait()
 }
@@ -81,4 +90,12 @@ INITLOOP:
 		time.Sleep(1 * time.Second)
 	}
 
+}
+
+func Shutdown(clients ClientConfig) int {
+	for i := 0; i < len(clients.Servers); i++ {
+		share.FouDel(fouPortInt[i+1])
+		share.InterfaceDel(i + 1)
+	}
+	return 0
 }
