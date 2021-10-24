@@ -58,7 +58,9 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int) error {
 		if err != nil {
 			return fmt.Errorf("fouDel: %v %v", err, tempPort)
 		}
+	}
 
+	if share.IsInterfacesExist(clientId) {
 		err = share.InterfaceDel(clientId)
 		if err != nil {
 			return fmt.Errorf("interfaceDel: %v", err)

@@ -84,3 +84,46 @@ func toString(k interface{}) string {
 	}
 	return t
 }
+
+func AddrAddArr(i string, k ...string) error {
+	Interface, err := netlink.LinkByName(i)
+	if err != nil {
+		return err
+	}
+	addrErrMap := make(map[string]error)
+
+	for i := 0; i < len(k); i++ {
+		addr, err1 := netlink.ParseAddr(k[i])
+		if err1 != nil {
+			addrErrMap[k[i]] = err1
+		} else {
+			err2 := netlink.AddrAdd(Interface, addr)
+			if err2 != nil {
+				addrErrMap[k[i]] = err2
+			}
+		}
+
+	}
+
+	extendedError := ""
+	for i, e := range addrErrMap {
+		extendedError += fmt.Sprintf("'%v':'%v'", i, e)
+	}
+
+	if extendedError != "" {
+		return fmt.Errorf("%v", extendedError)
+	}
+
+	return nil
+}
+
+func IsInterfacesExist(iface int) bool {
+	interfaces, _ := net.Interfaces()
+	for _, i := range interfaces {
+		if i.Name == fmt.Sprintf("%v%v", InterfacePrefix, iface) {
+			return true
+		}
+
+	}
+	return false
+}
