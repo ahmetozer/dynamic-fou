@@ -11,6 +11,7 @@ import (
 )
 
 type ClientConfig struct {
+	MTU        int
 	ClientName string
 	ServerKey  string
 	ClientKey  string
@@ -41,8 +42,13 @@ func (k ClientConfig) toString() string {
 	typeOfS := v.Type()
 
 	var t string
-	for i := 0; i < v.NumField(); i++ {
-		t += fmt.Sprintf("\"%s\":\"%v\",", typeOfS.Field(i).Name, v.Field(i).Interface())
+	l := v.NumField() - 1
+	for i := 0; i < l+1; i++ {
+		if i < l {
+			t += fmt.Sprintf("\"%s\":\"%v\",", typeOfS.Field(i).Name, v.Field(i).Interface())
+		} else {
+			t += fmt.Sprintf("\"%s\":\"%v\"", typeOfS.Field(i).Name, v.Field(i).Interface())
+		}
 	}
 	return t
 }
@@ -66,4 +72,28 @@ func getClientByName(name string) (ClientConfig, error) {
 		}
 	}
 	return ClientConfig{}, fmt.Errorf("client not found")
+}
+
+type CurrentClient struct {
+	IP   string
+	PORT int
+}
+
+// return server config as string
+func (k CurrentClient) toString() string {
+	v := reflect.ValueOf(k)
+	typeOfS := v.Type()
+
+	var t string
+
+	l := v.NumField() - 1
+	for i := 0; i < l+1; i++ {
+		if i < l {
+			t += fmt.Sprintf("\"%s\":\"%v\",", typeOfS.Field(i).Name, v.Field(i).Interface())
+		} else {
+			t += fmt.Sprintf("\"%s\":\"%v\"", typeOfS.Field(i).Name, v.Field(i).Interface())
+		}
+
+	}
+	return t
 }

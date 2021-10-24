@@ -4,17 +4,20 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/ahmetozer/dynamic-fou/share"
 	"go.uber.org/zap"
 )
 
 var (
-	configList []ClientConfig
-	ClientList map[string]CurrentClient
+	configList          []ClientConfig
+	CurrentClientList   map[string]CurrentClient
+	CurrentClientIdList map[string]int
 )
 
 type Config struct {
@@ -23,6 +26,8 @@ type Config struct {
 }
 
 func Start() {
+	CurrentClientList = make(map[string]CurrentClient)
+	CurrentClientIdList = make(map[string]int)
 	PORT := os.Getenv("PORT")
 	IP := os.Getenv("IP")
 	if IP == "" {
@@ -52,6 +57,7 @@ func Start() {
 	share.Logger.Debug("Config file parsed", zap.String("client-count", fmt.Sprint(len(configList))))
 
 	for i := 0; i < len(configList); i++ {
+		CurrentClientIdList[configList[i].ClientName] = i + 1
 		share.Logger.Debug(fmt.Sprintf("client %v", i+1), configList[i].toZap()...)
 	}
 
@@ -80,6 +86,12 @@ func Start() {
 	share.Logger.Info("server started", zap.String("server", conn.LocalAddr().String()))
 	message := make([]byte, 2048)
 
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		os.Exit(Shutdown())
+	}()
 StartLoop:
 	for {
 
@@ -96,7 +108,8 @@ StartLoop:
 func MessageTypeController(conn *net.UDPConn, message []byte, rlen int, remote *net.UDPAddr) {
 	data := strings.TrimSpace(string(message[:rlen]))
 
-	cli, err := getClientByName(share.IniVal(data, "client"))
+	clientName := share.IniVal(data, "client")
+	cli, err := getClientByName(clientName)
 	if err != nil {
 		share.Logger.Info("client info not parsed", zap.String("remote", remote.String()))
 		return
@@ -111,7 +124,7 @@ func MessageTypeController(conn *net.UDPConn, message []byte, rlen int, remote *
 	case "whoami":
 		Whoami(conn, remote)
 	case "connect":
-		Connect(conn, remote)
+		Connect(conn, remote, cli)
 	default:
 		share.Logger.Debug("unknow mode type", zap.String("remote", remote.String()), zap.String("mode", mode))
 	}
@@ -124,22 +137,17 @@ func Whoami(conn *net.UDPConn, remote *net.UDPAddr) {
 	}
 }
 
-func Connect(conn *net.UDPConn, remote *net.UDPAddr) {
-	err := share.UDPPortCheck(remote.Port)
-	status := "ok"
-	if err != nil {
-		status = "err"
-		share.Logger.Debug("connect", zap.String("remote", remote.String()), zap.Error(err))
-		_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\nerr=%v\n", status, err)), remote)
-		if err != nil {
-			share.Logger.Error("connect", zap.String("remote", remote.String()), zap.Error(err))
-		}
-		status = "err"
-		return
-	}
-	_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\n", status)), remote)
-	if err != nil {
-		share.Logger.Error("connect", zap.String("remote", remote.String()), zap.Error(err))
-	}
+func Shutdown() int {
 
+	var err error
+	for clientName, client := range CurrentClientList {
+		if client.IP != "" {
+			share.Logger.Debug("cleanup", zap.String("clientName", clientName), zap.Error(share.InterfaceDel(CurrentClientIdList[clientName])))
+		}
+
+	}
+	if err != nil {
+		return 1
+	}
+	return 0
 }
