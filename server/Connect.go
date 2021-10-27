@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/ahmetozer/dynamic-fou/share"
+	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
 )
 
@@ -36,6 +37,18 @@ func Connect(conn *net.UDPConn, remote *net.UDPAddr, client ClientConfig) {
 
 	if err != nil {
 		share.Logger.Error("connect.InterfaceAdd", zap.String("clientName", client.ClientName), zap.Error(err))
+		status = err.Error()
+	}
+
+	Interface, err := netlink.LinkByName(share.InterfaceName(CurrentClientIdList[client.ClientName]))
+	if err != nil {
+		share.Logger.Error("connect.InterfaceSelect", zap.String("clientName", client.ClientName), zap.Error(err))
+		status = err.Error()
+	}
+
+	err = netlink.LinkSetUp(Interface)
+	if err != nil {
+		share.Logger.Error("connect.InterfaceUp", zap.String("clientName", client.ClientName), zap.Error(err))
 		status = err.Error()
 	}
 

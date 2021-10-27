@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ahmetozer/dynamic-fou/share"
+	"github.com/vishvananda/netlink"
 )
 
 var (
@@ -134,5 +135,14 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 	if err != nil {
 		return fmt.Errorf("interfaceAdd: %v", err)
 	}
+	Interface, err := netlink.LinkByName(share.InterfaceName(clientId))
+	if err != nil {
+		return fmt.Errorf("interfaceSelect: %v", err)
+	}
+	err = netlink.LinkSetUp(Interface)
+	if err != nil {
+		return fmt.Errorf("interfaceUp: %v", err)
+	}
+
 	return nil
 }

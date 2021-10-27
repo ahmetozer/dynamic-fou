@@ -129,3 +129,7 @@ func IsInterfacesExist(iface int) bool {
 	}
 	return false
 }
+
+func InterfaceName(clientid int) string {
+	return fmt.Sprintf("%v%v", InterfacePrefix, clientid)
+}
