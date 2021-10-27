@@ -99,7 +99,7 @@ INITLOOP:
 			share.Logger.Error("connect", zap.String("remote", remote), zap.Error(err))
 			continue INITLOOP
 		}
-		share.Logger.Info("done")
+		share.Logger.Debug("setupDone", zap.String("IP", whoami.IP), zap.String("PORT", whoami.PORT))
 
 		time.Sleep(time.Second)
 	}

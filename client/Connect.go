@@ -53,6 +53,9 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 		return fmt.Errorf("atoi: %v", err)
 	}
 
+	// Read remote tunnel source port
+	serverv6LocalAddr := share.IniVal(string(p), "v6_localAddr")
+
 	newPort := fmt.Sprintf("%v", (*conn).LocalAddr())
 	newPort = newPort[strings.LastIndex(newPort, ":")+1:]
 	clientFouListenPort, err := strconv.Atoi(newPort)
@@ -93,7 +96,7 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 		return fmt.Errorf("tempConn: %v %v", err, clientFouListenPort)
 	}
 
-	for ty := 0; ty < 5; ty++ {
+	for ty := 0; ty < 3; ty++ {
 		fmt.Fprintf(tempConn, "mode=connect\nclient=%v\notk=%v", ClientName, share.NewOTK(a.ClientKey))
 		time.Sleep(time.Millisecond * 500)
 	}
@@ -111,9 +114,9 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 		return fmt.Errorf("tempConn: %v %v", err, clientFouListenPort)
 	}
 
-	for ty := 0; ty < 5; ty++ {
+	for ty := 0; ty < 3; ty++ {
 		fmt.Fprintf(tempConn2, "mode=connect\nclient=%v\notk=%v", ClientName, share.NewOTK(a.ClientKey))
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Millisecond * 500)
 	}
 
 	err = tempConn2.Close()
@@ -142,6 +145,16 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 	err = netlink.LinkSetUp(Interface)
 	if err != nil {
 		return fmt.Errorf("interfaceUp: %v", err)
+	}
+
+	addr, err := netlink.ParseAddr(serverv6LocalAddr)
+	if err != nil {
+		return fmt.Errorf("parseAddr: %v", err)
+	}
+
+	err = netlink.RouteAdd(&netlink.Route{LinkIndex: Interface.Attrs().Index, Dst: addr.IPNet})
+	if err != nil {
+		return fmt.Errorf("addrAdd: %v", err)
 	}
 
 	return nil

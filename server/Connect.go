@@ -52,7 +52,12 @@ func Connect(conn *net.UDPConn, remote *net.UDPAddr, client ClientConfig) {
 		status = err.Error()
 	}
 
-	_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\nsource_port=%v\n", status, sourcePort)), remote)
+	addrList, err := netlink.AddrList(Interface, netlink.FAMILY_ALL)
+	if err != nil {
+		share.Logger.Error("connect.AddrListGet", zap.String("clientName", client.ClientName), zap.Error(err))
+		status = err.Error()
+	}
+	_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\nsource_port=%v\nv6_localAddr=%v\n", status, sourcePort, addrList[0])), remote)
 	if err != nil {
 		share.Logger.Error("connect", zap.String("remote", remote.String()), zap.Error(err))
 	}

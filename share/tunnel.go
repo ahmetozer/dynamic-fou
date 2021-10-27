@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"strconv"
 
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
@@ -38,7 +39,7 @@ func InterfaceAdd(id int, sourcePort int, remote string, destinationPort int, MT
 	newtun := netlink.Gretap{}
 	if sourcePort == -1 {
 		newtun = netlink.Gretap{
-			LinkAttrs:  netlink.LinkAttrs{Name: fmt.Sprintf("%v%v", InterfacePrefix, id), MTU: MTU},
+			LinkAttrs:  netlink.LinkAttrs{Name: InterfacePrefix + strconv.Itoa(id), MTU: MTU},
 			PMtuDisc:   1,
 			Local:      net.IPv4(0, 0, 0, 0),
 			Remote:     destinationAddress,
@@ -47,7 +48,7 @@ func InterfaceAdd(id int, sourcePort int, remote string, destinationPort int, MT
 		}
 	} else {
 		newtun = netlink.Gretap{
-			LinkAttrs:  netlink.LinkAttrs{Name: fmt.Sprintf("%v%v", InterfacePrefix, id), MTU: MTU},
+			LinkAttrs:  netlink.LinkAttrs{Name: InterfacePrefix + strconv.Itoa(id), MTU: MTU},
 			PMtuDisc:   1,
 			Local:      net.IPv4(0, 0, 0, 0),
 			Remote:     destinationAddress,
@@ -63,7 +64,7 @@ func InterfaceAdd(id int, sourcePort int, remote string, destinationPort int, MT
 
 func InterfaceDel(id int) error {
 	newtun2 := netlink.Gretap{
-		LinkAttrs: netlink.LinkAttrs{Name: fmt.Sprintf("%v%v", InterfacePrefix, id)},
+		LinkAttrs: netlink.LinkAttrs{Name: InterfacePrefix + strconv.Itoa(id)},
 	}
 
 	return netlink.LinkDel(&newtun2)
@@ -87,8 +88,8 @@ func toString(k interface{}) string {
 	return t
 }
 
-func AddrAddArr(i string, k ...string) error {
-	Interface, err := netlink.LinkByName(i)
+func AddrAddArr(i int, k ...string) error {
+	Interface, err := netlink.LinkByName(InterfacePrefix + strconv.Itoa(i))
 	if err != nil {
 		return err
 	}
@@ -122,7 +123,7 @@ func AddrAddArr(i string, k ...string) error {
 func IsInterfacesExist(iface int) bool {
 	interfaces, _ := net.Interfaces()
 	for _, i := range interfaces {
-		if i.Name == fmt.Sprintf("%v%v", InterfacePrefix, iface) {
+		if i.Name == InterfacePrefix+strconv.Itoa(iface) {
 			return true
 		}
 
@@ -131,5 +132,5 @@ func IsInterfacesExist(iface int) bool {
 }
 
 func InterfaceName(clientid int) string {
-	return fmt.Sprintf("%v%v", InterfacePrefix, clientid)
+	return InterfacePrefix + strconv.Itoa(clientid)
 }
