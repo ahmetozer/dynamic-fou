@@ -31,14 +31,15 @@ func Connect(conn *net.UDPConn, remote *net.UDPAddr, client ClientConfig) {
 		PORT: remote.Port,
 	}
 
-	err = share.InterfaceAdd(CurrentClientIdList[client.ClientName], -1, remote.IP.String(), remote.Port, client.MTU)
+	sourcePort := share.PortGenerate()
+	err = share.InterfaceAdd(CurrentClientIdList[client.ClientName], sourcePort, remote.IP.String(), remote.Port, client.MTU)
 
 	if err != nil {
 		share.Logger.Error("connect.InterfaceAdd", zap.String("clientName", client.ClientName), zap.Error(err))
 		status = err.Error()
 	}
 
-	_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\n", status)), remote)
+	_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\nsource_port=%v\n", status, sourcePort)), remote)
 	if err != nil {
 		share.Logger.Error("connect", zap.String("remote", remote.String()), zap.Error(err))
 	}

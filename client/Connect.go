@@ -46,9 +46,15 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 		return err
 	}
 
+	// Read remote tunnel source port
+	serverSourcePort, err := strconv.Atoi(share.IniVal(string(p), "source_port"))
+	if err != nil {
+		return fmt.Errorf("atoi: %v", err)
+	}
+
 	newPort := fmt.Sprintf("%v", (*conn).LocalAddr())
 	newPort = newPort[strings.LastIndex(newPort, ":")+1:]
-	tempPort, err := strconv.Atoi(newPort)
+	clientFouListenPort, err := strconv.Atoi(newPort)
 	if err != nil {
 		return fmt.Errorf("atoi: %v", err)
 	}
@@ -56,7 +62,7 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 	if fouPortInt[clientId] != 0 {
 		err = share.FouDel(fouPortInt[clientId])
 		if err != nil {
-			return fmt.Errorf("fouDel: %v %v", err, tempPort)
+			return fmt.Errorf("fouDel: %v %v", err, clientFouListenPort)
 		}
 	}
 
@@ -78,10 +84,12 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 	if err != nil {
 		return fmt.Errorf("laddr: %v %v", err, connOldLocal)
 	}
+
+	// Send few packets to Fou DST port
 	raddr := net.UDPAddr{IP: net.ParseIP(a.RemoteAddr), Port: whoami.REMOTE_FOU_PORT}
 	tempConn, err := net.DialUDP("udp", laddr, &raddr)
 	if err != nil {
-		return fmt.Errorf("tempConn: %v %v", err, tempPort)
+		return fmt.Errorf("tempConn: %v %v", err, clientFouListenPort)
 	}
 
 	for ty := 0; ty < 5; ty++ {
@@ -94,14 +102,35 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 		return fmt.Errorf("tempConnClose: %v", err)
 	}
 
-	err = share.FouAdd(tempPort)
+	// Send few packets to Fou SRC port
+	// Open client dst port for server source port
+	raddr = net.UDPAddr{IP: net.ParseIP(a.RemoteAddr), Port: serverSourcePort}
+	tempConn2, err := net.DialUDP("udp", laddr, &raddr)
 	if err != nil {
-		return fmt.Errorf("fouAdd: %v %v", err, tempPort)
+		return fmt.Errorf("tempConn: %v %v", err, clientFouListenPort)
 	}
-	fouPortInt[clientId] = tempPort
 
-	err = share.InterfaceAdd(clientId, -1, a.RemoteAddr, int(whoami.REMOTE_FOU_PORT), a.MTU)
+	for ty := 0; ty < 5; ty++ {
+		fmt.Fprintf(tempConn2, "mode=connect\nclient=%v\notk=%v", ClientName, share.NewOTK(a.ClientKey))
+		time.Sleep(time.Second * 1)
+	}
 
+	err = tempConn2.Close()
+
+	if err != nil {
+		return fmt.Errorf("tempConnClose: %v", err)
+	}
+
+	err = share.FouAdd(clientFouListenPort)
+	if err != nil {
+		return fmt.Errorf("fouAdd: %v %v", err, clientFouListenPort)
+	}
+
+	// Store current fou port, that will be used in the next for removing existing port
+	// or clear changes on exit
+	fouPortInt[clientId] = clientFouListenPort
+
+	err = share.InterfaceAdd(clientId, clientFouListenPort, a.RemoteAddr, int(whoami.REMOTE_FOU_PORT), a.MTU)
 	if err != nil {
 		return fmt.Errorf("interfaceAdd: %v", err)
 	}

@@ -92,3 +92,19 @@ func CheckKernelFouCapability() error {
 
 	return nil
 }
+
+func PortGenerate() int {
+	conn, err := net.ListenUDP("udp", &net.UDPAddr{
+		IP: net.ParseIP("::"),
+	})
+
+	if err != nil {
+		return 0
+	}
+	newPort := fmt.Sprintf("%v", conn.LocalAddr())
+	newPort = newPort[strings.LastIndex(newPort, ":")+1:]
+	conn.Close()
+	tempPort, _ := strconv.Atoi(newPort)
+
+	return tempPort
+}

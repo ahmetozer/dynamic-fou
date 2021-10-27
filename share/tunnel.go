@@ -14,7 +14,7 @@ const InterfacePrefix = "dyn"
 func FouAdd(p int) error {
 	new_fou := &netlink.Fou{
 		Family:    netlink.FAMILY_V4,
-		Protocol:  4,
+		Protocol:  47,
 		Port:      p,
 		EncapType: netlink.FOU_ENCAP_DIRECT,
 	}
@@ -25,7 +25,7 @@ func FouAdd(p int) error {
 func FouDel(p int) error {
 	new_fou := &netlink.Fou{
 		Family:    netlink.FAMILY_V4,
-		Protocol:  4,
+		Protocol:  47,
 		Port:      p,
 		EncapType: netlink.FOU_ENCAP_DIRECT,
 	}
@@ -35,19 +35,21 @@ func FouDel(p int) error {
 
 func InterfaceAdd(id int, sourcePort int, remote string, destinationPort int, MTU int) error {
 	destinationAddress := net.ParseIP(remote)
-	newtun := netlink.Iptun{}
+	newtun := netlink.Gretap{}
 	if sourcePort == -1 {
-		newtun = netlink.Iptun{
+		newtun = netlink.Gretap{
 			LinkAttrs:  netlink.LinkAttrs{Name: fmt.Sprintf("%v%v", InterfacePrefix, id), MTU: MTU},
 			PMtuDisc:   1,
+			Local:      net.IPv4(0, 0, 0, 0),
 			Remote:     destinationAddress,
 			EncapDport: uint16(destinationPort),
 			EncapType:  netlink.FOU_ENCAP_DIRECT,
 		}
 	} else {
-		newtun = netlink.Iptun{
+		newtun = netlink.Gretap{
 			LinkAttrs:  netlink.LinkAttrs{Name: fmt.Sprintf("%v%v", InterfacePrefix, id), MTU: MTU},
 			PMtuDisc:   1,
+			Local:      net.IPv4(0, 0, 0, 0),
 			Remote:     destinationAddress,
 			EncapSport: uint16(sourcePort),
 			EncapDport: uint16(destinationPort),
@@ -60,7 +62,7 @@ func InterfaceAdd(id int, sourcePort int, remote string, destinationPort int, MT
 }
 
 func InterfaceDel(id int) error {
-	newtun2 := netlink.Iptun{
+	newtun2 := netlink.Gretap{
 		LinkAttrs: netlink.LinkAttrs{Name: fmt.Sprintf("%v%v", InterfacePrefix, id)},
 	}
 
