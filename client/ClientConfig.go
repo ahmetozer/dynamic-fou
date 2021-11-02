@@ -16,8 +16,6 @@ type ClientConfig struct {
 }
 type SvConfig struct {
 	RemotePort        uint16
-	ControlInterval   uint16
-	ControlRetry      uint16
 	RemoteAddr        string
 	ServerKey         string
 	ClientKey         string

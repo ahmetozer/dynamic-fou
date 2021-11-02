@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -16,12 +17,14 @@ import (
 
 var (
 	ClientName string
+	ScriptFile string
 )
 
 func Start() {
 	fouPortInt = make(map[int]int)
 
 	configFile := os.Getenv("CONFIG_FILE")
+	ScriptFile = os.Getenv("SCRIPT_FILE")
 
 	if configFile == "" {
 		configFile = "/etc/dynamic-fou.client.json"
@@ -107,6 +110,14 @@ INITLOOP:
 		share.Logger.Debug("connectDone", zap.String("IP", whoami.IP), zap.String("PORT", whoami.PORT))
 
 		time.Sleep(time.Second * 5)
+
+		if ScriptFile != "" {
+			ex := share.Env{"MODE=client", "REMOTE_ADDR=" + a.RemoteAddr, "REMOTE_PORT=" + strconv.Itoa(int(a.RemotePort)), "MTU=" + strconv.Itoa(a.MTU), "REMOTE_LOCAL_IPV6=" + a.RemoteV6LocalAddr, "WHOAMI_IP=" + whoami.IP, "WHOAMI_PORT=" + whoami.PORT, "INTERFACE=" + share.InterfaceName(clientId), "FOU_PORT=" + strconv.Itoa(fouPortInt[clientId]), "REMOTE_FOU_PORT=" + strconv.Itoa(whoami.REMOTE_FOU_PORT)}
+			stdout, stderr := ex.Exec(ScriptFile)
+			share.Logger.Debug("script", zap.String("remote", remote), zap.String("stdout", stdout), zap.String("stderr", stderr))
+
+		}
+
 		err = a.Ping(clientId)
 		if err != nil {
 			share.Logger.Error("ping", zap.String("remote", remote), zap.Error(err))
