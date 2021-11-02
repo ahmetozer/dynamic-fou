@@ -19,6 +19,7 @@ var (
 	CurrentClientList   map[string]CurrentClient
 	CurrentClientIdList map[string]int
 	fouPortInt          int
+	TcpServerBool       = true
 	PongServer          net.Listener
 )
 
@@ -152,6 +153,7 @@ func Whoami(conn *net.UDPConn, remote *net.UDPAddr) {
 func Shutdown() int {
 
 	var err error
+	TcpServerBool = false
 	PongServer.Close()
 
 	for clientName, client := range CurrentClientList {

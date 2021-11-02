@@ -18,22 +18,25 @@ func Pong(port int) {
 	}
 	share.Logger.Info("tcp conn test server started", zap.String("server", "[::]"+":"+strconv.Itoa(port)))
 	defer PongServer.Close()
-	for {
+	for TcpServerBool {
 		conn, err := PongServer.Accept()
-		if err != nil {
+		if err == nil {
+			go PongHandleRequest(conn)
+		} else {
 			share.Logger.Error("Pong", zap.Error(err))
 		}
-		go PongHandleRequest(conn)
+
 	}
 }
 
 // Handles incoming requests.
 func PongHandleRequest(conn net.Conn) {
-	share.Logger.Info("Pong", zap.String("newclient", conn.RemoteAddr().Network()))
+	share.Logger.Info("Pong", zap.String("newclient", conn.RemoteAddr().String()))
 	buf := make([]byte, 1024)
 	_, err := conn.Read(buf)
 	if err != nil {
-		share.Logger.Info("Pong", zap.String("client", conn.RemoteAddr().Network()), zap.Error(err))
+		share.Logger.Info("Pong", zap.String("client", conn.RemoteAddr().String()), zap.Error(err))
+		return
 	}
 
 	conn.Close()
