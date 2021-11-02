@@ -28,8 +28,14 @@ func init() {
 	IP = os.Getenv("IP")
 	MODE = os.Getenv("MODE")
 	if MODE == "" {
+		if len(os.Args) > 1 {
+			MODE = os.Args[1]
+		}
+	}
+	if MODE == "" {
 		MODE = "server"
 	}
+
 	LOGFILE = os.Getenv("LOG_FILE")
 	if LOGFILE == "" {
 		LOGFILE = "-"
