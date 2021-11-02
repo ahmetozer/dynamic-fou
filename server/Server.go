@@ -19,6 +19,7 @@ var (
 	CurrentClientList   map[string]CurrentClient
 	CurrentClientIdList map[string]int
 	fouPortInt          int
+	PongServer          net.Listener
 )
 
 type Config struct {
@@ -151,6 +152,8 @@ func Whoami(conn *net.UDPConn, remote *net.UDPAddr) {
 func Shutdown() int {
 
 	var err error
+	PongServer.Close()
+
 	for clientName, client := range CurrentClientList {
 		if client.IP != "" {
 			share.Logger.Debug("cleanup", zap.String("clientName", clientName), zap.Error(share.InterfaceDel(CurrentClientIdList[clientName])))

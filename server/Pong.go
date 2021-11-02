@@ -10,15 +10,16 @@ import (
 )
 
 func Pong(port int) {
-	l, err := net.Listen("tcp", "[::]"+":"+strconv.Itoa(port))
+	var err error
+	PongServer, err = net.Listen("tcp", "[::]"+":"+strconv.Itoa(port))
 	if err != nil {
 		share.Logger.Panic("Pong", zap.Error(err))
 		os.Exit(1)
 	}
 	share.Logger.Info("tcp conn test server started", zap.String("server", "[::]"+":"+strconv.Itoa(port)))
-	defer l.Close()
+	defer PongServer.Close()
 	for {
-		conn, err := l.Accept()
+		conn, err := PongServer.Accept()
 		if err != nil {
 			share.Logger.Error("Pong", zap.Error(err))
 		}
