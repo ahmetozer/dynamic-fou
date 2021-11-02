@@ -84,6 +84,7 @@ func Start() {
 		share.Logger.Fatal("fouAdd", zap.String("port", fouPort), zap.String("err", err.Error()))
 	}
 
+	go Pong(i)
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
 		Port: i,
 		IP:   net.ParseIP(IP),

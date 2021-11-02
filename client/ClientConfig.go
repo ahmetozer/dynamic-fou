@@ -15,13 +15,15 @@ type ClientConfig struct {
 	Servers    []SvConfig
 }
 type SvConfig struct {
-	RemotePort      uint16
-	ControlInterval uint16
-	ControlRetry    uint16
-	RemoteAddr      string
-	ServerKey       string
-	ClientKey       string
-	MTU             int
+	RemotePort        uint16
+	ControlInterval   uint16
+	ControlRetry      uint16
+	RemoteAddr        string
+	ServerKey         string
+	ClientKey         string
+	RemoteV6LocalAddr string
+	ClientV6LocalAddr string
+	MTU               int
 }
 
 func Parse(configPath string) (ClientConfig, error) {

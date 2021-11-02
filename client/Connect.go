@@ -15,7 +15,7 @@ var (
 	fouPortInt map[int]int
 )
 
-func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
+func (a *SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 
 	fmt.Fprintf(*conn, "mode=connect\nclient=%v\notk=%v", ClientName, share.NewOTK(a.ClientKey))
 
@@ -147,15 +147,18 @@ func (a SvConfig) Connect(conn *net.Conn, clientId int, whoami Whoami) error {
 		return fmt.Errorf("interfaceUp: %v", err)
 	}
 
-	addr, err := netlink.ParseAddr(serverv6LocalAddr)
+	_, err = netlink.ParseAddr(serverv6LocalAddr)
 	if err != nil {
 		return fmt.Errorf("parseAddr: %v", err)
 	}
+	a.RemoteV6LocalAddr = serverv6LocalAddr
 
-	err = netlink.RouteAdd(&netlink.Route{LinkIndex: Interface.Attrs().Index, Dst: addr.IPNet})
+	addrList, err := netlink.AddrList(Interface, netlink.FAMILY_ALL)
 	if err != nil {
-		return fmt.Errorf("addrAdd: %v", err)
+		return fmt.Errorf("addrList: %v", err)
 	}
+
+	a.ClientV6LocalAddr = addrList[0].String()
 
 	return nil
 }

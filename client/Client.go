@@ -59,6 +59,11 @@ func Start() {
 }
 
 func (a SvConfig) clientInit(clientId int) {
+	defer func() {
+		if r := recover(); r != nil {
+			share.Logger.Error("panic", zap.Int("clientId", clientId), zap.String("recover", fmt.Sprintf("%v", r)))
+		}
+	}()
 	k := true
 	var whoami Whoami
 INITLOOP:
@@ -68,10 +73,10 @@ INITLOOP:
 		share.Logger.Debug("new-client", zap.String("remote", remote), zap.String("local", conn.LocalAddr().String()))
 		if err != nil {
 			share.Logger.Error(remote, zap.String("err", fmt.Sprintf("%v", err)))
+			time.Sleep(1 * time.Second)
 			continue INITLOOP
 		}
 
-		time.Sleep(1 * time.Second)
 		share.Logger.Debug("whoami", zap.String("stat", "function started"), zap.String("IP", a.RemoteAddr), zap.Uint16("PORT", a.RemotePort))
 		for z := 0; z < 3; z++ {
 			if z == 0 {
@@ -99,9 +104,13 @@ INITLOOP:
 			share.Logger.Error("connect", zap.String("remote", remote), zap.Error(err))
 			continue INITLOOP
 		}
-		share.Logger.Debug("setupDone", zap.String("IP", whoami.IP), zap.String("PORT", whoami.PORT))
+		share.Logger.Debug("connectDone", zap.String("IP", whoami.IP), zap.String("PORT", whoami.PORT))
 
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * 5)
+		err = a.Ping(clientId)
+		if err != nil {
+			share.Logger.Error("ping", zap.String("remote", remote), zap.Error(err))
+		}
 	}
 
 }
