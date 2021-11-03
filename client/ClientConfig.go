@@ -17,7 +17,6 @@ type ClientConfig struct {
 type SvConfig struct {
 	RemotePort        uint16
 	RemoteAddr        string
-	ServerKey         string
 	ClientKey         string
 	RemoteV6LocalAddr string
 	ClientV6LocalAddr string

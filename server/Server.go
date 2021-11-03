@@ -42,7 +42,7 @@ func Start() {
 		PORT = "65200"
 	}
 
-	configFile := os.Getenv("CONFIG_FILE")
+	configFile := os.Getenv("CLIENT_LIST")
 
 	if configFile == "" {
 		configFile = "/etc/dynamic-fou.server.json"

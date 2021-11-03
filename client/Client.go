@@ -23,7 +23,7 @@ var (
 func Start() {
 	fouPortInt = make(map[int]int)
 
-	configFile := os.Getenv("CONFIG_FILE")
+	configFile := os.Getenv("SERVER_LIST")
 	ScriptFile = os.Getenv("SCRIPT_FILE")
 
 	if configFile == "" {

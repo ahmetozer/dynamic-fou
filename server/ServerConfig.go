@@ -13,12 +13,7 @@ import (
 type ClientConfig struct {
 	MTU        int
 	ClientName string
-	ServerKey  string
 	ClientKey  string
-	Route      []string
-	Route6     []string
-	Addr       []string
-	Addr6      []string
 }
 
 func Parse(configPath string) ([]ClientConfig, error) {
