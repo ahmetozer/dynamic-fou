@@ -21,6 +21,7 @@ var (
 	fouPortInt          int
 	TcpServerBool       = true
 	PongServer          net.Listener
+	ScriptFile          string
 )
 
 type Config struct {
@@ -38,7 +39,7 @@ func Start() {
 	}
 
 	if PORT == "" {
-		PORT = "9000"
+		PORT = "65200"
 	}
 
 	configFile := os.Getenv("CONFIG_FILE")
@@ -46,6 +47,8 @@ func Start() {
 	if configFile == "" {
 		configFile = "/etc/dynamic-fou.server.json"
 	}
+
+	ScriptFile = os.Getenv("SCRIPT_FILE")
 
 	share.Logger.Debug("Opening config file", zap.String("config-file", configFile))
 	err := share.CheckFolder(filepath.Dir(configFile))
@@ -74,7 +77,7 @@ func Start() {
 	fouPort := os.Getenv("FOU_PORT")
 
 	if fouPort == "" {
-		fouPort = "5555"
+		fouPort = "65201"
 	}
 
 	fouPortInt, err = strconv.Atoi(fouPort)
@@ -129,7 +132,7 @@ func MessageTypeController(conn *net.UDPConn, message []byte, rlen int, remote *
 	}
 	otkStatus := share.OTKCheck(share.IniVal(data, "otk"), cli.ClientKey)
 	mode := share.IniVal(data, "mode")
-	share.Logger.Debug("newMesagge", zap.String("mode", mode), zap.String("otk", share.IniVal(data, "otk")), zap.String("remote", remote.String()), zap.Bool("isOTKValid", otkStatus))
+	share.Logger.Debug("newMessage", zap.String("mode", mode), zap.String("otk", share.IniVal(data, "otk")), zap.String("remote", remote.String()), zap.Bool("isOTKValid", otkStatus))
 	if !otkStatus {
 		return
 	}

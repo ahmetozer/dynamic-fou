@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/ahmetozer/dynamic-fou/share"
 	"github.com/vishvananda/netlink"
@@ -60,6 +61,13 @@ func Connect(conn *net.UDPConn, remote *net.UDPAddr, client ClientConfig) {
 	_, err = conn.WriteTo([]byte(fmt.Sprintf("status=%v\nsource_port=%v\nv6_localAddr=%v\n", status, sourcePort, addrList[0])), remote)
 	if err != nil {
 		share.Logger.Error("connect", zap.String("remote", remote.String()), zap.Error(err))
+		return
+	}
+
+	if ScriptFile != "" {
+		ex := share.Env{"MODE=server", "CLIENT_NAME=" + client.ClientName, "REMOTE_ADDR=" + remote.IP.String(), "REMOTE_PORT=" + strconv.Itoa(remote.Port), "MTU=" + strconv.Itoa(client.MTU), "INTERFACE=" + share.InterfaceName(CurrentClientIdList[client.ClientName]), "FOU_PORT=" + strconv.Itoa(fouPortInt)}
+		stdout, stderr := ex.Exec(ScriptFile)
+		share.Logger.Debug("script", zap.String("client", client.ClientName), zap.String("stdout", stdout), zap.String("stderr", stderr))
 	}
 
 }

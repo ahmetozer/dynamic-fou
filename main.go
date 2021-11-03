@@ -42,7 +42,7 @@ func init() {
 	}
 	LOGLEVEL = os.Getenv("LOG_LEVEL")
 	if LOGLEVEL == "" {
-		LOGLEVEL = "1"
+		LOGLEVEL = "2"
 	}
 }
 
