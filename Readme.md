@@ -6,8 +6,6 @@ It also works behind NAT444 (CGN-LSN). You can use low end devices for connectin
 Before starting using this software, please be sure your kernel supports FOU encap.  
 If your kernel has a FOU support but not enabled, you can enable it with `modprobe fou` command.
 
-
-
 ## Server Side
 
 System is requires 2 ports for testing, identifying and network traffic.
@@ -27,6 +25,7 @@ FOU_PORT=65201  # Incoming tunneling packet destination.
 SCRIPT_FILE=    # Execute when the new client established
 CLIENT_LIST=    # Client configurations file
 ```
+
 For client verification and interface MTU configuration, client configuration for the server is stored in a json file.
 
 ```json
@@ -47,10 +46,11 @@ INTERFACE=dyn1           # Interface name for this client
 FOU_PORT=65201           # Local fou port for listening incoming packets
 ```
 
+Example script is available at `/scripts/server.sh`.
+
 ## Client Side
 
 To automate configure tunnel endpoints at client side, you can execute this software as client mode. You can switch client mode with setting the first argument as client or set the environment variable `MODE=client` .
-
 
 ### Client Configuration
 
@@ -80,7 +80,7 @@ Server list file contains client name and remote server infos such as IP and POR
 }
 ```
 
-Below arguments are passed to the script file when the system establishes the connection. 
+Below arguments are passed to the script file when the system establishes the connection.
 
 ```bash
 MODE=client                                     # Current application mode
@@ -94,3 +94,5 @@ INTERFACE=dyn1                                  # Created interface for this con
 FOU_PORT=48398                                  # Client Incoming port before nat. 
 REMOTE_FOU_PORT=65201                           # Server Inbound Port
 ```
+
+You can find example script at `/scripts/client.sh`.
